@@ -57,7 +57,6 @@ def run_glitch(
     image_file: Optional[Path],
     duration: float,
     fps: Optional[int],
-    base: Optional[int],
     glitch2_secs: Optional[float],
     wobble_main: Optional[float],
     wobble_jitter: Optional[float],
@@ -93,8 +92,6 @@ def run_glitch(
         ]
         if fps is not None:
             cmd += ["--fps", str(fps)]
-        if base is not None:
-            cmd += ["--base", str(base)]
         if glitch2_secs is not None:
             cmd += ["--glitch2_secs", str(glitch2_secs)]
         if wobble_main is not None:
@@ -139,7 +136,6 @@ def build_ui():
         duration = gr.Number(label="Duration (seconds)", value=5, precision=2)
         with gr.Accordion("Optional Parameters", open=False):
             fps = gr.Slider(1, 120, value=30, step=1, label="fps (frames per second)")
-            base = gr.Slider(1, 100, value=20, step=1, label="base")
             glitch2_secs = gr.Number(value=0.0, precision=2, label="glitch2_secs")
             wobble_main = gr.Number(value=0.0, precision=2, label="wobble_main")
             wobble_jitter = gr.Number(value=0.0, precision=2, label="wobble_jitter")
@@ -153,7 +149,6 @@ def build_ui():
 
         def _wrap(*args):
             path = run_glitch(*args)
-            # Gradio returns a hosted URL when a File component is used. We emit both.
             return path, path
 
         run_btn.click(
@@ -163,7 +158,6 @@ def build_ui():
                 image_file,
                 duration,
                 fps,
-                base,
                 glitch2_secs,
                 wobble_main,
                 wobble_jitter,
@@ -174,7 +168,6 @@ def build_ui():
             outputs=[output_file, url_box],
         )
 
-        # ---- Lightweight API doc in UI ----
         gr.Markdown(
             """
             ### API Usage
@@ -189,12 +182,11 @@ def build_ui():
                   "https://picsum.photos/seed/abc/800/600",  # image_url
                   null,                                       # image_file (null when using URL)
                   5,                                          # duration
-                  30, 20, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0       # optional params
+                  30, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0           # optional params
                 ]
               }' \
               https://<your-username>-glitch-video.hf.space/run/predict
             ```
-            The response contains `data[0]` → hosted file URL.
 
             **Multipart (file upload)**
             ```bash
@@ -202,10 +194,9 @@ def build_ui():
               -F "data=@-;type=application/json" \
               -F "files[]=@/path/to/local_image.jpg" \
               https://<your-username>-glitch-video.hf.space/run/predict <<'JSON'
-            {"data": [null, "file", 5, 30, 20, 0, 0, 0, 0, 0, 0]}
+            {"data": [null, "file", 5, 30, 0, 0, 0, 0, 0, 0]}
             JSON
             ```
-            In multipart mode, set the **second** item to the string `"file"` and attach the image in `files[]`.
             """
         )
 
