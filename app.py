@@ -46,14 +46,12 @@ def _download_image(url: str, dst_dir: Path) -> Path:
 
 
 def _ensure_image(path: Path) -> Path:
-    # Simple open-validate cycle (also normalizes/transcodes weird formats)
     with Image.open(path) as im:
-        im.verify()  # quick integrity check
+        im.verify()
     return path
 
 
 def _pick_output(candidates: List[Path]) -> Optional[Path]:
-    """Prefer *_final.mp4 > *_vfx.mp4 > *_raw.mp4 > any .mp4 > any .gif."""
     if not candidates:
         return None
     prefer = [
@@ -126,15 +124,30 @@ def run_glitch(
         except subprocess.CalledProcessError as e:
             raise gr.Error(f"glitch.py failed: {e}")
 
-        if not out_path.exists():
-            cands = list(tdir.glob("**/*.mp4")) + list(tdir.glob("**/*.gif"))
-            picked = _pick_output(cands)
-            if not picked:
-                tree = "\n".join(str(p) for p in tdir.rglob("*"))
-                raise gr.Error("Output file not produced by glitch.py (no .mp4/.gif found). Files:\n" + tree)
-            out_path = picked
+        # Look for output in multiple possible directories
+        search_roots = {tdir}
+        if src_path is not None:
+            search_roots.add(src_path.parent)
 
-        return str(out_path)
+        cands: List[Path] = []
+        for root in search_roots:
+            cands.extend(root.glob("*.mp4"))
+            cands.extend(root.glob("*.gif"))
+            cands.extend(root.rglob("*_final.mp4"))
+            cands.extend(root.rglob("*_vfx.mp4"))
+            cands.extend(root.rglob("*_raw.mp4"))
+
+        picked = _pick_output(list(set(cands)))
+        if not picked:
+            tree_lines = []
+            for root in list(search_roots):
+                for p in root.rglob("*"):
+                    tree_lines.append(str(p))
+                    if len(tree_lines) > 2000:
+                        break
+            raise gr.Error("Output file not produced by glitch.py. Files scanned:\n" + "\n".join(tree_lines))
+
+        return str(picked)
 
 
 # --- Gradio UI ---
