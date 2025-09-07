@@ -22,3 +22,50 @@ You can use it from the **web UI** or programmatically via the **API**.
 The Space exposes `/run/predict` for programmatic access.  
 The input order matches the UI fields:
 
+```
+[ image_url:str | null,
+image_file:path | "file" | null,
+duration:number,
+fps:number,
+base:number,
+glitch2_secs:number,
+wobble_main:number,
+wobble_jitter:number,
+wobble_f1:number,
+wobble_f2:number,
+sigma:number ]
+```
+
+
+### Example (JSON + URL)
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "data": [
+      "https://picsum.photos/seed/abc/800/600",
+      null,
+      5,
+      30, 20, 0, 0, 0, 0, 0, 0
+    ]
+  }' \
+  https://<your-username>-glitch-video.hf.space/run/predict
+```
+
+```
+curl -X POST \
+  -F "data=@-;type=application/json" \
+  -F "files[]=@/path/to/local_image.jpg" \
+  https://<your-username>-glitch-video.hf.space/run/predict <<'JSON'
+{"data": [null, "file", 5, 30, 20, 0, 0, 0, 0, 0, 0]}
+JSON
+```
+
+
+🛠️ Requirements
+
+FFmpeg/ffprobe v7 (installed via Dockerfile).
+Python deps: gradio, pillow, glitch-this, requests.
+
+
+
