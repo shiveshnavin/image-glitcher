@@ -62,7 +62,7 @@ def run_glitch(
     wobble_jitter: Optional[float],
     wobble_f1: Optional[float],
     wobble_f2: Optional[float],
-    sigma: Optional[float],
+    blur: Optional[float],
 ):
     if not duration or duration <= 0:
         raise gr.Error("Duration must be > 0 seconds")
@@ -102,8 +102,8 @@ def run_glitch(
             cmd += ["--wobble_f1", str(wobble_f1)]
         if wobble_f2 is not None:
             cmd += ["--wobble_f2", str(wobble_f2)]
-        if sigma is not None:
-            cmd += ["--sigma", str(sigma)]
+        if blur is not None:
+            cmd += ["--blur", str(blur)]
 
         # Run
         print("Running:", shlex.join(cmd))
@@ -141,7 +141,7 @@ def build_ui():
             wobble_jitter = gr.Number(value=0.0, precision=2, label="wobble_jitter")
             wobble_f1 = gr.Number(value=0.0, precision=2, label="wobble_f1")
             wobble_f2 = gr.Number(value=0.0, precision=2, label="wobble_f2")
-            sigma = gr.Number(value=0.0, precision=2, label="sigma")
+            blur = gr.Number(value=0.0, precision=2, label="blur")
 
         run_btn = gr.Button("Generate")
         output_file = gr.File(label="Output video")
@@ -163,7 +163,7 @@ def build_ui():
                 wobble_jitter,
                 wobble_f1,
                 wobble_f2,
-                sigma,
+                blur,
             ],
             outputs=[output_file, url_box],
         )
