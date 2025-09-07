@@ -3,7 +3,7 @@ import tempfile
 import subprocess
 import shlex
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 import gradio as gr
 import requests
@@ -52,6 +52,24 @@ def _ensure_image(path: Path) -> Path:
     return path
 
 
+def _pick_output(candidates: List[Path]) -> Optional[Path]:
+    """Prefer *_final.mp4 > *_vfx.mp4 > *_raw.mp4 > any .mp4 > any .gif."""
+    if not candidates:
+        return None
+    prefer = [
+        lambda p: p.suffix.lower() == ".mp4" and p.name.endswith("_final.mp4"),
+        lambda p: p.suffix.lower() == ".mp4" and p.name.endswith("_vfx.mp4"),
+        lambda p: p.suffix.lower() == ".mp4" and p.name.endswith("_raw.mp4"),
+        lambda p: p.suffix.lower() == ".mp4",
+        lambda p: p.suffix.lower() == ".gif",
+    ]
+    for rule in prefer:
+        for p in candidates:
+            if rule(p):
+                return p
+    return candidates[0]
+
+
 def run_glitch(
     image_url: Optional[str],
     image_file: Optional[Path],
@@ -69,7 +87,6 @@ def run_glitch(
 
     with tempfile.TemporaryDirectory() as td:
         tdir = Path(td)
-        # Source image handling
         src_path: Optional[Path] = None
         if image_file is not None:
             src_path = Path(image_file)
@@ -80,10 +97,8 @@ def run_glitch(
 
         _ensure_image(src_path)
 
-        # Output path
         out_path = tdir / "glitched.mp4"
 
-        # Build CLI
         cmd = [
             "python", str(GLITCH_SCRIPT),
             str(src_path),
@@ -105,7 +120,6 @@ def run_glitch(
         if blur is not None:
             cmd += ["--blur", str(blur)]
 
-        # Run
         print("Running:", shlex.join(cmd))
         try:
             subprocess.run(cmd, check=True)
@@ -113,9 +127,13 @@ def run_glitch(
             raise gr.Error(f"glitch.py failed: {e}")
 
         if not out_path.exists():
-            raise gr.Error("Output file not produced by glitch.py")
+            cands = list(tdir.glob("**/*.mp4")) + list(tdir.glob("**/*.gif"))
+            picked = _pick_output(cands)
+            if not picked:
+                tree = "\n".join(str(p) for p in tdir.rglob("*"))
+                raise gr.Error("Output file not produced by glitch.py (no .mp4/.gif found). Files:\n" + tree)
+            out_path = picked
 
-        # Return file path; Gradio will host and provide a URL.
         return str(out_path)
 
 
