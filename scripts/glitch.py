@@ -5,6 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 from PIL import Image
+import shutil
 
 # pip install glitch-this pillow
 try:
@@ -309,12 +310,14 @@ def main():
                     wobble_f1=args.wobble_f1, wobble_f2=args.wobble_f2,
                     blur_sigma=args.blur)
 
+    shutil.copy(final_mp4, args.out)
     log("[DONE]")
     log(f" - GIF 1: {gif1}")
     log(f" - GIF 2: {gif2}")
     log(f" - MP4 raw (looped+concat): {concat_raw}")
     log(f" - MP4 with VFX: {vfx_mp4}")
     log(f" - MP4 final with transitions: {final_mp4}")
+    log(f" - Out File: {args.out}")
 
 if __name__ == "__main__":
     main()
