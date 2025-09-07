@@ -107,6 +107,7 @@ def build_concat_raw(gif1: Path, gif2: Path, out_mp4: Path, fps: int, dur_total:
         "-filter_complex", filter_complex,
         "-map", "[v]",
         "-r", str(F),
+        "-t", str(dur_total),
         "-c:v", "libx264", "-pix_fmt", "yuv420p",
         str(out_mp4)
     ]
@@ -248,14 +249,14 @@ def main():
     ap.add_argument("duration", type=float, help="Total output duration in seconds (e.g., 8.0)")
     ap.add_argument("--fps", type=int, default=60, help="Frames per second (default: 60)")
     ap.add_argument("--base", type=Path, default=None, help="Output basename (default: image stem)")
-    ap.add_argument("--out", type=Path, default=None, help="Final Output filename")
+    ap.add_argument("--out", type=Path, default=None, help="Output filename")
     ap.add_argument("--glitch2_secs", type=float, default=2.0, help="Duration of heavy glitch segment (default: 2.0s)")
     # Transition tuning
     ap.add_argument("--wobble_main", type=float, default=0.008, help="Main wobble radians amplitude during transitions")
     ap.add_argument("--wobble_jitter", type=float, default=0.002, help="Jitter wobble radians amplitude during transitions")
     ap.add_argument("--wobble_f1", type=float, default=1.0, help="Wobble frequency 1 (Hz)")
     ap.add_argument("--wobble_f2", type=float, default=1.0, help="Wobble frequency 2 (Hz)")
-    ap.add_argument("--sigma", type=int, default=6, help="Gaussian blur sigma during transitions")
+    ap.add_argument("--blur", type=int, default=6, help="Gaussian blur sigma during transitions")
     args = ap.parse_args()
 
     img_path = args.image
@@ -278,7 +279,7 @@ def main():
     gif2 = Path(f"{base}_glitch2.gif")
     concat_raw = Path(f"{base}_raw.mp4")
     vfx_mp4 = Path(f"{base}_vfx.mp4")
-    final_mp4 = args.out or Path(f"{base}_final.mp4")
+    final_mp4 = args.base or Path(f"{base}_final.mp4")
 
     log(f"[SETUP] image={img_path} duration={duration}s fps={fps} glitch2_secs={glitch2_secs}s")
     log(f"[PLAN] seg1(loop)={seg1_secs:.3f}s seg2(heavy)={seg2_secs:.3f}s")
@@ -306,7 +307,7 @@ def main():
     add_transitions(vfx_mp4, final_mp4, fps=fps, dur_total=duration,
                     wobble_main=args.wobble_main, wobble_jitter=args.wobble_jitter,
                     wobble_f1=args.wobble_f1, wobble_f2=args.wobble_f2,
-                    blur_sigma=args.sigma)
+                    blur_sigma=args.blur)
 
     log("[DONE]")
     log(f" - GIF 1: {gif1}")
