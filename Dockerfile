@@ -1,33 +1,33 @@
-FROM python:3.10-slim
 
+FROM jrottenberg/ffmpeg:8-ubuntu-edge
 
-ENV DEBIAN_FRONTEND=noninteractive \
-PIP_NO_CACHE_DIR=1 \
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONUNBUFFERED=1
+# Install Python and dependencies
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends \
+		python3 python3-pip python3-venv python3-dev \
+		build-essential wget ca-certificates && \
+	rm -rf /var/lib/apt/lists/*
 
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-wget xz-utils ca-certificates && \
-rm -rf /var/lib/apt/lists/*
-
-
-RUN wget -O /tmp/ffmpeg.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz && \
-mkdir -p /opt/ffmpeg && \
-tar -xJf /tmp/ffmpeg.tar.xz -C /opt/ffmpeg --strip-components=1 && \
-ln -s /opt/ffmpeg/ffmpeg /usr/local/bin/ffmpeg && \
-ln -s /opt/ffmpeg/ffprobe /usr/local/bin/ffprobe && \
-ffmpeg -version && ffprobe -version
-
+# Set python/pip aliases
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 WORKDIR /app
+
+# Copy requirements and install Python packages
 COPY requirements.txt ./
-RUN pip install -r requirements.txt
 
+# Create virtual environment and install requirements
+RUN python3 -m venv /opt/venv \
+	&& /opt/venv/bin/pip install --upgrade pip \
+	&& /opt/venv/bin/pip install -r requirements.txt
 
+# Copy app code
 COPY scripts ./scripts
 COPY app.py ./app.py
 
-
 EXPOSE 7860
+
+ENV PATH="/opt/venv/bin:$PATH"
+
+ENTRYPOINT []
 CMD ["python", "app.py"]

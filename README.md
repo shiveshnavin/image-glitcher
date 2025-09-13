@@ -1,5 +1,5 @@
 ---
-title: Gentle Audio
+title: Glitch Image
 emoji: 🔥
 colorFrom: indigo
 colorTo: green
@@ -7,12 +7,28 @@ sdk: docker
 pinned: false
 ---
 
+
 # 🔧 Glitch Video Generator
 
-This Space wraps `scripts/glitch.py` and converts an image into a glitched video using **FFmpeg/ffprobe v7**.  
+This Space wraps `scripts/glitch.py` and converts an image into a glitched video using **FFmpeg/ffprobe v8** (via Docker).  
 You can use it from the **web UI** or programmatically via the **API**.
 
-## 🚀 Usage (UI)
+## � Docker-based Deployment (Hugging Face Spaces)
+
+This Space is configured to use a custom Docker image for deployment. The Dockerfile installs all dependencies, including FFmpeg, Python, and required Python packages, and overrides the default ffmpeg entrypoint so the Gradio app runs as expected.
+
+**You do not need to install anything manually on Hugging Face Spaces.**
+
+If you want to run locally:
+
+```bash
+docker build -t image-glitcher .
+docker run -p 7860:7860 image-glitcher
+```
+
+The app will be available at http://localhost:7860
+
+## �🚀 Usage (UI)
 1. Open the Space.
 2. Paste an **image URL** or upload an image.
 3. Set the **duration (seconds)** and optional parameters.
@@ -62,10 +78,14 @@ JSON
 ```
 
 
-🛠️ Requirements
 
-FFmpeg/ffprobe v7 (installed via Dockerfile).
-Python deps: gradio, pillow, glitch-this, requests.
+🛠️ Requirements (for local non-Docker use)
+
+- FFmpeg/ffprobe v8 (or higher)
+- Python 3.10+
+- gradio, pillow, glitch-this, requests
+
+For Hugging Face Spaces, all requirements are handled by the Dockerfile.
 
 
 
